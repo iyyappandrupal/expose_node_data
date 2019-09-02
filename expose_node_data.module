@@ -1,0 +1,75 @@
+<?php
+
+/**
+ * @file
+ * Alter the system site information form.
+ */
+
+use Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_FORM_ID_alter().
+ */
+function expose_node_data_form_system_site_information_settings_alter(&$form, FormStateInterface $form_state, $form_id) {
+
+  /*
+   * get existing site information configuration
+   */
+  $config = \Drupal::config('system.site');
+  $siteapikey = $config->get('siteapikey');
+
+  /*
+   * Adding the text field to store Site API Key
+   */
+  $form['site_information']['siteapikey'] = [
+    '#type' => 'textfield',
+    '#title' => t("Site API Key"),
+    '#description' => t('Enter the Site API key to validate while exposing the node details as json.'),
+    '#required' => TRUE,
+    '#default_value' => $siteapikey,
+  ];
+
+  /*
+   * Adding the submit handler to Save Configuration button
+   */
+  foreach (array_keys($form['actions']) as $action) {
+    if ($action != 'preview' && isset($form['actions'][$action]['#type']) && $form['actions'][$action]['#type'] === 'submit') {
+
+      /*
+       * Change Save Configuration button text if API key is changed
+       */
+      if (is_apikey_updated($siteapikey)) {
+        $form['actions'][$action]['#value'] = t('Update Configuration');
+      }
+      $form['actions'][$action]['#submit'][] = 'expose_node_data_form_system_site_information_submit_handler';
+    }
+  }
+}
+
+/**
+ * Custom submit handler.
+ */
+function expose_node_data_form_system_site_information_submit_handler(array $form, FormStateInterface $form_state) {
+
+  $siteapikey = $form_state->getValue('siteapikey');
+  if ($siteapikey) {
+    $config_factory = \Drupal::configFactory();
+    $config_factory->getEditable('system.site')->set('siteapikey', $siteapikey)->save();
+    if (!is_apikey_updated($siteapikey)) {
+      $siteapikey = '';
+    }
+    $messenger = Drupal::service('messenger');
+    $messenger->addMessage(t('Site API Key %siteapikey has been saved', ['%siteapikey' => $siteapikey]));
+  }
+}
+
+/**
+ * Check API key is modified or not.
+ */
+function is_apikey_updated($siteapikey) {
+  if ($siteapikey == 'No API Key yet') {
+    return FALSE;
+  }
+
+  return TRUE;
+}

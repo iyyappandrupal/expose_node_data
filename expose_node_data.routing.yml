@@ -1,0 +1,7 @@
+rest.node:
+  path: '/page_json/{siteapikey}/{node}'
+  defaults:
+    _controller: '\Drupal\expose_node_data\Controller\ExposeController::renderApi'
+    _title: 'Expose Node Data'
+  requirements:
+    _permission: 'access content'

@@ -1,0 +1,4 @@
+services:
+  rest.export:
+    class: 'Drupal\expose_node_data\RestExport'
+    arguments: ['@serializer', '@current_route_match', '@config.factory', '@entity_type.manager']      
